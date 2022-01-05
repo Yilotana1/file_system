@@ -28,7 +28,6 @@ public class Main {
         fsCore.read(fd1, 0, data.length());
         int fd2 = fsCore.open("test1.txt");
         fsCore.read(fd2, 0, data.length());
-        fsCore.mkfs(3);
         fsCore.truncate("test1.txt", 10);
         System.out.println("----TEST----TRUNCATE--------!!!");
         System.out.println("----TEST----TRUNCATE--------!!!");

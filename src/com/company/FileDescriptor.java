@@ -35,10 +35,6 @@ public class FileDescriptor implements Serializable {
         return directoryLinks;
     }
 
-    public void setDirectoryLinks(Map<String, Integer> directoryLinks) {
-        this.directoryLinks = directoryLinks;
-    }
-
     public FileType getFileType() {
         return fileType;
     }
