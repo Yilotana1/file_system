@@ -11,7 +11,7 @@ public class BitMap implements Serializable {
 
     public static final int BLOCK_SIZE = 5;
 
-    public static final int MAX_BLOCKS_NUMBER = 4;
+    public static final int MAX_BLOCKS_NUMBER = 50;
     private int bitmap;
 
     private static boolean isCreated = false;

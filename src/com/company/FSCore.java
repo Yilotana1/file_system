@@ -37,7 +37,7 @@ public class FSCore {
                 "id = " + fileDesc.getId() + "\n" +
                         "Type = " + fileDesc.getFileType() + "\n" +
                         "linksNumber = " + fileDesc.getLinksNumber() + "\n" +
-                        "size = " + fileDesc.getSize() + " bytes\n";
+                        "size = " + fileDesc.getSize();
         System.out.println(descOutput);
     }
 
