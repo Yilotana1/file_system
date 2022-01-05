@@ -81,25 +81,25 @@ public class FSCore {
             throw new DataLengthLessThanRequestedSizeException();
         }
         Map<Integer, Block> blocks = fileDescriptor.getBlocksMap();
-        int initialBlockPosition = (offset / BLOCK_SIZE) * BLOCK_SIZE;
-        int offsetFromInitialBlock = offset - initialBlockPosition;
+        int firstBlockToRead = (offset / BLOCK_SIZE) * BLOCK_SIZE;
+        int offsetFromFirstBlockToRead = offset - firstBlockToRead;
 
         StringBuilder data = new StringBuilder();
-        if (BLOCK_SIZE - offsetFromInitialBlock >= size) {
-            data.append(blocks.get(initialBlockPosition).getData(), offsetFromInitialBlock, offsetFromInitialBlock + size);
+        if (BLOCK_SIZE - offsetFromFirstBlockToRead >= size) {
+            data.append(blocks.get(firstBlockToRead).getData(), offsetFromFirstBlockToRead, offsetFromFirstBlockToRead + size);
             System.out.println(data);
             return;
         }
-        data.append(blocks.get(initialBlockPosition).getData().substring(offsetFromInitialBlock));
-        int blocksLeft = getHowManyBlocksLeft(size - (BLOCK_SIZE - offsetFromInitialBlock));
-        int dataOffset = BLOCK_SIZE - offsetFromInitialBlock;
+        data.append(blocks.get(firstBlockToRead).getData().substring(offsetFromFirstBlockToRead));
+        int blocksLeft = getHowManyBlocksLeft(size - (BLOCK_SIZE - offsetFromFirstBlockToRead));
+        int dataOffset = BLOCK_SIZE - offsetFromFirstBlockToRead;
         if (blocksLeft != 0) {
             for (int i = 1; i <= blocksLeft; i++) {
                 if (i == blocksLeft) {
-                    data.append(blocks.get(initialBlockPosition + i * BLOCK_SIZE).getData(), 0, size - dataOffset);
+                    data.append(blocks.get(firstBlockToRead + i * BLOCK_SIZE).getData(), 0, size - dataOffset);
                     break;
                 }
-                data.append(blocks.get(initialBlockPosition + i * BLOCK_SIZE).getData());
+                data.append(blocks.get(firstBlockToRead + i * BLOCK_SIZE).getData());
                 dataOffset += BLOCK_SIZE;
             }
         }
@@ -109,31 +109,31 @@ public class FSCore {
     public void write(int fd, int offset, int size, String data) throws NoOpenedFilesWithSuchNumberException, NoBlocksAvailableException, DataLengthLessThanRequestedSizeException {
         if (size > data.length()) throw new DataLengthLessThanRequestedSizeException();
         FileDescriptor fileDescriptor = findFileDescriptorByFd(fd);
-        int initialBlockPosition = (offset / BLOCK_SIZE) * BLOCK_SIZE;
-        int offsetFromInitialBlock = offset - initialBlockPosition;
+        int firstBlockToWritePosition = (offset / BLOCK_SIZE) * BLOCK_SIZE;
+        int offsetFromFirstBlockToWrite = offset - firstBlockToWritePosition;
 
         TreeMap<Integer, Block> blocks = fileDescriptor.getBlocksMap();
-        int additionalBlocksAmount = 0;
+        int newBlocksToCreate = 0;
         if (blocks.size() < (offset / BLOCK_SIZE) + 1) {
-            additionalBlocksAmount += (offset / BLOCK_SIZE + 1) - blocks.size();
+            newBlocksToCreate += (offset / BLOCK_SIZE + 1) - blocks.size();
         }
         if (getHowManyBlocksLeft(offset + size) > blocks.size()) {
-            additionalBlocksAmount += getHowManyBlocksLeft(offset + size) - (blocks.size() + additionalBlocksAmount);
+            newBlocksToCreate += getHowManyBlocksLeft(offset + size) - (blocks.size() + newBlocksToCreate);
         }
-        if (fileSystem.bitMap.areBlocksAvailable(additionalBlocksAmount)) {
-            putBlocksIntoMap(additionalBlocksAmount, blocks);
+        if (fileSystem.bitMap.areBlocksAvailable(newBlocksToCreate)) {
+            putBlocksIntoMap(newBlocksToCreate, blocks);
         } else throw new NoBlocksAvailableException();
 
-        Block currentBlock = blocks.get(initialBlockPosition);
-        if (BLOCK_SIZE - offsetFromInitialBlock >= size) {
-            currentBlock.setData(currentBlock.getData().substring(0, offsetFromInitialBlock) + data.substring(0, size));
+        Block currentBlock = blocks.get(firstBlockToWritePosition);
+        if (BLOCK_SIZE - offsetFromFirstBlockToWrite >= size) {
+            currentBlock.setData(currentBlock.getData().substring(0, offsetFromFirstBlockToWrite) + data.substring(0, size));
             return;
         }
-        int dataOffset = BLOCK_SIZE - offsetFromInitialBlock;
+        int dataOffset = BLOCK_SIZE - offsetFromFirstBlockToWrite;
         int dataLeft = size - dataOffset;
-        currentBlock.setData(currentBlock.getData().substring(0, offsetFromInitialBlock) + data.substring(0, BLOCK_SIZE - offsetFromInitialBlock));
+        currentBlock.setData(currentBlock.getData().substring(0, offsetFromFirstBlockToWrite) + data.substring(0, BLOCK_SIZE - offsetFromFirstBlockToWrite));
         int blocksLeft = getHowManyBlocksLeft(dataLeft);
-        int currentBlockPosition = initialBlockPosition + BLOCK_SIZE;
+        int currentBlockPosition = firstBlockToWritePosition + BLOCK_SIZE;
         for (int i = 0; i < blocksLeft; i++) {
             if (i != blocksLeft - 1) {
                 blocks.get(currentBlockPosition).setData(data.substring(dataOffset, dataOffset + BLOCK_SIZE));
